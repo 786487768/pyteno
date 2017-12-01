@@ -131,16 +131,17 @@ class TaskCrops(object):
             # 这里是使用isinstance类型判断还是使用type属性判断？
             # 个人认为（未测试），属性判断更快
             if task_crop.task_crops_type == TaskCropsType.TaskCrops_Normal:
-                new_task = Task(job_id="test1",
-                                crops_id=task_crop.task_crops_id,
-                                dependence=task_crop.parents,
-                                command=task_crop.command)
-                tasks.append(new_task)
-                counter += 1
-                if counter == max_task_nums:
-                    yield tasks
-                    tasks.clear()
-                    counter = 0
+                for _ in range(task_crop.tasks_num):
+                    new_task = Task(job_id="test1",
+                                    crops_id=task_crop.task_crops_id,
+                                    dependence=task_crop.parents,
+                                    command=task_crop.command)
+                    tasks.append(new_task)
+                    counter += 1
+                    if counter == max_task_nums:
+                        yield tasks
+                        tasks.clear()
+                        counter = 0
             elif task_crop.task_crops_type == TaskCropsType.TaskCrops_File:
                 # input_files = list()
                 # output_files = list()
@@ -239,12 +240,12 @@ class TaskCropsNormal(TaskCrops):
         job_id: 任务团所属作业id
         command： 任务执行命令
     """
-    def __init__(self, task_crops_id=None, job_id=None, command=None):
+    def __init__(self, task_crops_id=None, job_id=None, command=None, tasks_num=1):
 
         super(TaskCropsNormal, self).__init__(task_crops_id, job_id)
         self.task_crops_type = TaskCropsType.TaskCrops_Normal
         self.command = command
-        self.tasks_num = 1
+        self.tasks_num = tasks_num
 
 
 class TaskCropsFile(TaskCrops):
@@ -297,7 +298,7 @@ class TaskCropsParams(TaskCrops):
 
 
 if __name__ == '__main__':
-    A = TaskCropsNormal(task_crops_id='A', job_id='test_1')
+    """A = TaskCropsNormal(task_crops_id='A', job_id='test_1')
     B = TaskCropsFile(task_crops_id='B', job_id='test_1',
                       input_files=['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'], files_num=10)
     C = TaskCropsFile(task_crops_id='C', job_id='test_1',
@@ -306,8 +307,10 @@ if __name__ == '__main__':
     A.children.append(B)
     A.children.append(C)
     B.children.append(D)
-    C.children.append(D)
+    C.children.append(D)"""
 
+    A = TaskCropsNormal(task_crops_id='A', job_id='test_1',
+                        command='/home/ll/PycharmProjects/cal_time 1', tasks_num=100)
     task_crops_1 = TaskCrops.bfs(A)
     print(task_crops_1)
 
