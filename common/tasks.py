@@ -23,14 +23,14 @@ class TaskState(object):
     CANCEL = 6
     SUBMIT_ERROR = -1
 
-    STATE_DESCRIPTION = {SUBMITTED: "Your Job Has Been Submitted",
-                         WAITING: "Your Job Is Waiting In Queue",
-                         RUNNING: "Your Job Is Running",
-                         SUCCESS: "Your Job Has Been Finished Successfully",
-                         FAIL: "Your Job Has Been Finished Fail",
-                         PEND: "Your Job is Pending",
-                         CANCEL: "Your Job Has Been Canceled",
-                         SUBMIT_ERROR: "Your Job Occurred Submit Error"}
+    STATE_DESCRIPTION = {SUBMITTED: "Your Task Has Been Submitted",
+                         WAITING: "Your Task Is Waiting In Queue",
+                         RUNNING: "Your Task Is Running",
+                         SUCCESS: "Your Task Has Been Finished Successfully",
+                         FAIL: "Your Task Has Been Finished Fail",
+                         PEND: "Your Task is Pending",
+                         CANCEL: "Your Task Has Been Canceled",
+                         SUBMIT_ERROR: "Your Task Occurred Submit Error"}
 
     STATE_DESCRIPTION2 = {SUBMITTED: "Submitted",
                           WAITING: "Waiting",
@@ -309,9 +309,12 @@ if __name__ == '__main__':
     B.children.append(D)
     C.children.append(D)"""
 
+    import sys
+    redis_hostname = sys.argv[1]
+    redis_port = sys.argv[2]
     A = TaskCropsNormal(task_crops_id='A', job_id='test_1',
-                        command='/home/ll/PycharmProjects/cal_time 1', tasks_num=100)
+                        command='/home/ll/PycharmProjects/cal_time 1', tasks_num=20)
     task_crops_1 = TaskCrops.bfs(A)
     print(task_crops_1)
 
-    TaskCrops.submitter(task_crops_1)
+    TaskCrops.submitter(task_crops_1, host=redis_hostname, port=redis_port)

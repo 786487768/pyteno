@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys
 import json
 import time
 import redis
@@ -16,14 +17,15 @@ def worker(task_queue):
 	while 1:
 		#time.sleep(1)
 		task_info = json.loads(task_queue.get())
-		if task_info is None:
-			break
 		# print(task_info.get('command'))
 		args = ["bash", "-c", "-l", task_info.get('command')]
 		p = Popen(args, stdout=PIPE, stderr=PIPE)
 		output, error = p.communicate()
 		print(output)
 		task_queue.task_done()
+		if task_queue.empty():
+			print("worker stop")
+			return
 
 
 class Executor(object):
@@ -49,8 +51,7 @@ class Executor(object):
 				for _ in range(self.process_num * 2):
 					task_info = self.redis_instance.lpop('task_info_list')
 					if task_info is None:
-						task_queue.put(task_info)
-						break
+						return
 					task_queue.put(task_info.decode('UTF-8'))
 			time.sleep(1)
 
@@ -65,6 +66,9 @@ class Executor(object):
 		producer.join()
 		p.close()
 		p.join()
+
+		print("worker over")
+		return
 
 	'''
 	def _oversee_resource(self, pids, interval):
@@ -85,17 +89,31 @@ class Executor(object):
 		for t in threads:
 			t.join()
 	'''
-	def _oversee_resource(self, interval):
-		while 1:
-			print(psutil.cpu_percent())
-			print(psutil.virtual_memory())
-			time.sleep(1)
+	def _oversee_resource(self, interval, process_task_t):
+		import socket
+		hostname = socket.gethostname()
+		dir = os.getcwd()
+		path = os.path.join(dir, hostname)
+		with open(path, 'a') as resource_info:
+			cpu_percents = []
+			timer = 0
+			while 1:
+				cpu_percents.append(str(psutil.cpu_percent()))
+				timer += 1
+				print(process_task_t.isAlive())
+				if not process_task_t.isAlive() or timer == 10:
+					resource_info.write('\n'.join(cpu_percents))
+					cpu_percents.clear()
+					timer = 0
+					if not process_task_t.isAlive():
+						return
+				time.sleep(1)
 
 	def run(self, interval=1):
-		oversee_t = threading.Thread(target=self._oversee_resource,
-									 args=(interval,), name="OverseeThread")
 		process_task_t = threading.Thread(target=self._process_task,
 									name="ProcessTaskThread")
+		oversee_t = threading.Thread(target=self._oversee_resource,
+									 args=(interval,process_task_t,), name="OverseeThread")
 
 		process_task_t.start()
 		oversee_t.start()
@@ -104,7 +122,10 @@ class Executor(object):
 
 
 if __name__ == '__main__':
-	e = Executor(4, 'localhost', 6379)
+	process_nums = int(sys.argv[1])
+	redis_host = sys.argv[2]
+	redis_port = sys.argv[3]
+	e = Executor(process_nums, 'localhost', 6379)
 	e.run()
 
 
