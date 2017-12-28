@@ -154,15 +154,16 @@ class TaskCropsParams(TaskCrops):
     Attributes:
         task_crops_id: 任务团唯一id，可由用户指定也可自动生成（最好自动生成）
         job_id: 任务团所属作业id
-        exe_program：可执行程序path
-        params: 参数列表，形式为[[param1, param2, ...], [], [], ...]
-        output_files: 输出文件列表，没有则自动生成
+        exe_program_params：可执行程序path和参数, 形式为[exe, param1， param2, param3, ...]
+        replace_params_nums: 需要被替换的参数个数
+        replace_params:      需要被替换的参数
+        replace_param_index: 需要被替换的参数在exe_params中的索引
     """
-    def __init__(self, task_crops_id=None, job_id=None, exe_program=None,
-                 params=None, output_files=None, params_num=None):
+    def __init__(self, task_crops_id=None, job_id=None, exe_program_params=[],
+                 replace_params_nums=None, replace_params=[],replace_param_index=None):
         super(TaskCropsParams, self).__init__(task_crops_id, job_id)
         self.task_crops_type = TaskCropsType.TaskCrops_Para
-        self.exe_program = exe_program
-        self.params = params
-        self.output_files = output_files
-        self.tasks_num = params_num
+        self.exe_program_params = exe_program_params
+        self.replace_params_nums = replace_params_nums
+        self.replace_params = replace_params
+        self.replace_param_index = replace_param_index

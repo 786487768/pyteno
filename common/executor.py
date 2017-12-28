@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
 import json
@@ -53,7 +53,6 @@ class Executor(object):
                     if task_info is None:
                         return
                     task_queue.put(task_info.decode('UTF-8'))
-            time.sleep(1)
 
     def _process_task(self):
         task_queue = multiprocessing.Manager().Queue()
@@ -103,6 +102,7 @@ class Executor(object):
                 print(process_task_t.isAlive())
                 if not process_task_t.isAlive() or timer == 10:
                     resource_info.write('\n'.join(cpu_percents))
+                    resource_info.write('\n')
                     cpu_percents.clear()
                     timer = 0
                     if not process_task_t.isAlive():
@@ -125,5 +125,5 @@ if __name__ == '__main__':
     process_nums = int(sys.argv[1])
     redis_host = sys.argv[2]
     redis_port = sys.argv[3]
-    e = Executor(process_nums, 'localhost', 6379)
+    e = Executor(process_nums, redis_host, redis_port)
     e.run()

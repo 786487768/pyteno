@@ -1,1 +1,3 @@
 .idea*
+*pycache*
+cal_time

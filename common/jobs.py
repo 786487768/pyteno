@@ -71,8 +71,7 @@ class Job(object):
                     tag[child_task_crops.task_crops_id] = 1
         return task_crops
 
-    @staticmethod
-    def generator(task_crops=None, max_task_nums=10):
+    def generator(self, task_crops=None, max_task_nums=10):
         counter = 0
         tasks = list()
         for task_crop in task_crops:
@@ -80,7 +79,7 @@ class Job(object):
             # 私以为（未测试），属性判断更快
             if task_crop.task_crops_type == TaskCropsType.TaskCrops_Normal:
                 for _ in range(task_crop.tasks_num):
-                    new_task = Task(job_id="test1",
+                    new_task = Task(job_id=self.job_id,
                                     crops_id=task_crop.task_crops_id,
                                     dependence=task_crop.parents,
                                     command=task_crop.command)
@@ -133,7 +132,7 @@ class Job(object):
                 for (input_file, output_file) in zip(input_files, output_files):
                     command = "%s %s >> %s" % (task_crop.exe_program,
                                                input_file, output_file)
-                    new_task = Task(job_id="test1",
+                    new_task = Task(job_id=self.job_id,
                                     crops_id=task_crop.task_crops_id,
                                     dependence=task_crop.parents,
                                     command=command)
@@ -144,12 +143,39 @@ class Job(object):
                         tasks.clear()
                         counter = 0
             # 参数类型任务团
+            elif task_crop.task_crops_type == TaskCropsType.TaskCrops_Para:
+                param_nums = len(task_crop.exe_program_params)
+                for index in task_crop.replace_param_index:
+                    if index >= param_nums:
+                        print("replace index out of range")
+                        raise ValueError
+                task_nums = len(task_crop.replace_params[0])
+                for replace_params in task_crop.replace_params:
+                    if task_nums != len(replace_params):
+                        print("replace_params num error")
+                        raise ValueError
+                for replace_num in range(task_nums):
+                    command = task_crop.exe_program_params
+                    index_counter = 0
+                    for replace_param_index in task_crop.replace_param_index:
+                        command[replace_param_index] = task_crop.replace_params[index_counter][replace_num]
+                        index_counter += 1
+                    command_string = ' '.join(command)
+                    new_task = Task(job_id=self.job_id,
+                                    crops_id=task_crop.task_crops_id,
+                                    dependence=task_crop.parents,
+                                    command=command_string)
+                    tasks.append(new_task)
+                    counter += 1
+                    if counter == max_task_nums:
+                        yield tasks
+                        tasks.clear()
+                        counter = 0
             else:
                 pass
         yield tasks
 
-    @staticmethod
-    def submitter(task_crops=None, thread_nums=5, host='localhost', port=6379):
+    def submitter(self, task_crops=None, thread_nums=5, host='localhost', port=6379):
         import redis
         import threading
 
@@ -169,7 +195,7 @@ class Job(object):
             t = threading.Thread(target=worker)
             t.start()
             threads.append(t)
-        for tasks in Job.generator(task_crops=task_crops):
+        for tasks in self.generator(task_crops=task_crops):
             for task in tasks:
                 task_queue.put(task)
             task_queue.join()
@@ -187,7 +213,7 @@ class Job(object):
         task_crops_info = self.bfs()
         print(task_crops_info)
 
-        Job.submitter(task_crops_info, host=redis_hostname, port=redis_port)
+        self.submitter(task_crops_info, host=redis_hostname, port=redis_port)
 
 
 if __name__ == '__main__':
