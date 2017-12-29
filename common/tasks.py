@@ -1,9 +1,7 @@
-import os
+import time
 import uuid
-import queue
 import json
 
-from os.path import isfile, isdir, join
 
 
 class TaskCropsType(object):
@@ -60,10 +58,16 @@ class Task(object):
         self.command = command
         self.state = TaskState.SUBMITTED
         self.dependence = dependence
-        self.start_time = None
+        self.start_time = time.time()
         self.end_time = None
         self.error_info = None
         self.level = -1
+
+    def to_dict(self):
+        task_json_info = {'command': self.command,
+                          'start_time': self.start_time,
+                          }
+        return task_json_info
 
     def to_json_string(self):
         task_json_info = {'task_id': self.task_id,
@@ -76,6 +80,7 @@ class Task(object):
                           'end_time': self.end_time,
                          }
         return json.dumps(task_json_info)
+
 
 
 class TaskCrops(object):
